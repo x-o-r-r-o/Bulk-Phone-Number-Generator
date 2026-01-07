@@ -292,13 +292,6 @@ git checkout -b feature/my-improvement
    - Why it’s useful
    - How to test it
   
-
-## License
-  ```text
-All rights reserved.
-
-Unauthorized copying, modification, or distribution of this software, via any medium, is strictly prohibited.
-```
 ## Credits
 - Developer: **xorro**
 - Repository: https://github.com/x-o-r-r-o/Bulk-Phone-Number-Generator
