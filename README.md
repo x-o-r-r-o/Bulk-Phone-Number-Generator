@@ -68,6 +68,7 @@ Run:
 python phone_generator.py
 ```
 You will be prompted step by step.
+
 **1.1. Country selection**
 You can type:
 - ISO code: US
