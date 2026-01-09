@@ -276,6 +276,237 @@ Key types and functions:
 **CLI script: phone_generator_cli.py**
 - Provides a scriptable interface with argparse
 - Suitable for batch jobs, automation, and integration into other tooling
+
+# E164 Export Tool
+
+CLI tool to export a column named `e164_number` from a CSV file, ensure each number has a `+` prefix, and save the cleaned numbers to a text file.
+
+Works on:
+
+- Windows 10 / 11
+- macOS
+- Linux
+
+The launch scripts will:
+
+1. Check if a suitable Python 3 is installed (≥ 3.8 on macOS/Linux; any Python 3 on Windows).
+2. If missing, attempt to install Python globally (system-wide).
+3. Run the `export_e164.py` script.
+
+---
+
+## Folder Structure
+
+Place the files like this:
+  ```text
+project_folder/ export_e164.py run_windows.bat run_macos.sh run_linux.sh
+```
+
+You can zip and distribute the `oasis_tool` folder.
+
+---
+
+## Requirements
+
+- Internet connection (for first run on systems without Python or Homebrew/package manager metadata).
+- Admin/sudo rights for:
+  - Installing Python on Windows.
+  - Installing Homebrew + Python on macOS.
+  - Installing Python packages via system package manager on Linux.
+
+---
+
+## Usage Overview
+
+Basic usage (all platforms):
+
+```bash
+# Windows
+run_windows.bat path\to\file.csv
+
+# macOS
+./run_macos.sh /path/to/file.csv
+
+# Linux
+./run_linux.sh /path/to/file.csv
+```
+If you don’t provide file.csv as an argument, the script will prompt you for the CSV path.
+
+By default, output is written as numbers.txt in the same folder as the input CSV, one number per line, each starting with +.
+
+You can also specify an explicit output file via the -o/--output option, passed through to export_e164.py:
+
+```text
+# Windows
+run_windows.bat path\to\file.csv -o path\to\output.txt
+
+# macOS
+./run_macos.sh /path/to/file.csv -o /path/to/output.txt
+
+# Linux
+./run_linux.sh /path/to/file.csv -o /path/to/output.txt
+```
+
+## Details Per Platform for export_e164.py
+**Windows 10/11**
+Entry point: run_windows.bat
+
+Behavior:
+1. Checks for python and then py -3.
+2. If neither is available, downloads the official Python installer (currently 3.12.1, 64-bit) from python.org.
+3. Installs Python silently for all users and adds it to PATH.
+4. Re-checks for Python and finally runs:
+```text
+python export_e164.py ...
+```
+or
+```text
+py -3 export_e164.py ...
+```
+Run from project_folder directory:
+```text
+run_windows.bat path\to\file.csv
+```
+or Just:
+```text
+run_windows.bat
+```
+## macOS
+Entry point: run_macos.sh
+
+Behavior:
+1. Checks for python3 with version ≥ 3.8.
+2. If missing:
+  - Installs Homebrew (if not already installed).
+  - Uses Homebrew to install Python.
+3. Runs:
+```text
+python3 export_e164.py ...
+```
+Setup:
+```text
+cd project_folder
+chmod +x run_macos.sh
+```
+Run:
+```text
+./run_macos.sh /path/to/file.csv
+```
+and then enter the CSV path when prompted.
+
+## Linux
+Entry point: run_linux.sh
+Behavior:
+1. Checks for python3 with version ≥ 3.8.
+2. If missing, attempts to install Python 3 via the detected package manager (requires sudo):
+  - apt (Debian/Ubuntu)
+  - dnf / yum (Fedora/RHEL/CentOS)
+  - zypper (openSUSE)
+  - pacman (Arch)
+3. Run:
+```text
+python3 export_e164.py ...
+```
+Setup:
+```text
+cd project_folder
+chmod +x run_linux.sh
+```
+Run:
+```text
+./run_linux.sh /path/to/file.csv
+```
+Or:
+```text
+./run_linux.sh
+```
+and then enter the CSV path when prompted.
+**export_e164.py Behavior**
+
+Core logic:
+
+- Reads the CSV file using csv.DictReader.
+- Looks for a column named e164_number.
+  - If the column is missing, it raises an error.
+- For each row:
+  - Reads and strips the value in e164_number.
+  - Skips empty values.
+  - Ensures the number starts with +:
+    - If it already has +, it's kept.
+    - If not, + is prepended.
+- Writes all processed numbers to a text file, one per line.
+
+CLI options:
+```text
+python export_e164.py \[csv_path\] \[-o OUTPUT\]
+```
+
+- csv_path (optional positional):
+  - Path to the input CSV.
+  - If omitted, the script prompts: Enter path to CSV file:
+- -o, \--output (optional):
+  - Path to the output text file.
+  - Default: numbers.txt in the same directory as the input CSV.
+
+Examples (directly with Python, if you already have it):
+```text
+python3 export_e164.py contacts.csv
+
+python3 export_e164.py contacts.csv -o cleaned_numbers.txt
+
+python3 export_e164.py \# will prompt for CSV path
+```
+
+**CSV Requirements**
+
+- File must contain a header row.
+- Must include a column named exactly:
+```text
+e164_number
+```
+
+Example CSV:
+```text
+name,e164_number
+Alice,1234567890
+Bob,+19876543210
+Charlie, 441234567890
+```
+
+Output (numbers.txt):
+
+```text
++1234567890
++19876543210
++441234567890
+```
+
+**Notes / Limitations**
+
+- Windows script uses a specific Python installer URL (currently 3.12.1,
+  64-bit). Update this URL in run_windows.bat when you want to move to a
+  newer Python release.
+- macOS script assumes Homebrew is acceptable for installing Python.
+- Linux script relies on common package managers and requires sudo for
+  installing Python.
+- All scripts are CLI-only; there is no GUI.
+
+**Troubleshooting**
+
+- CSV column not found\
+  Error: Column \'e164_number\' not found in CSV header: \[\...\]\
+  → Ensure your CSV has a header row with e164_number spelled exactly.
+- Permission issues when installing Python
+  - Windows: run the .bat from an elevated Command Prompt if needed.
+  - macOS/Linux: ensure your user can run sudo and enter the password.
+- Python still not found after install step
+  - On Windows: verify that Python is on the PATH, or run py -3
+    \--version.
+  - On macOS/Linux: run python3 \--version to confirm installation, then
+    re-run the launcher script.
+
+
+
 ## Error Handling & Notes
 - If the requested number of valid numbers cannot be generated within a reasonable number of attempts, the generator stops early and reports how many it managed to generate.
 - If serial or fixed-prefix configuration doesn’t fit into the chosen local-part length, the tool raises an error (or asks you to reconfigure in interactive mode).
